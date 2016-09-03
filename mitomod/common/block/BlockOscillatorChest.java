@@ -2,7 +2,7 @@ package com.mito.mitomod.common.block;
 
 import java.util.Random;
 
-import com.mito.mitomod.common.mitomain;
+import com.mito.mitomod.common.BAO_main;
 import com.mito.mitomod.common.tile.TileOscillator;
 import com.mito.mitomod.common.tile.TileOscillatorChest;
 
@@ -42,7 +42,7 @@ public class BlockOscillatorChest extends BlockOscillator {
 	@Override
 	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float posX, float posY, float posZ) {
 
-		player.openGui(mitomain.INSTANCE, mitomain.GUI_ID, world, x, y, z);
+		player.openGui(BAO_main.INSTANCE, BAO_main.GUI_ID_OCHEST, world, x, y, z);
         return true;
 	}
 

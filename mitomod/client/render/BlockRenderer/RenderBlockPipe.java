@@ -3,7 +3,7 @@ package com.mito.mitomod.client.render.BlockRenderer;
 import com.mito.mitomod.client.render.RenderCore;
 import com.mito.mitomod.common.LoadBCAPI;
 import com.mito.mitomod.common.LoadCoFHLib;
-import com.mito.mitomod.common.mitomain;
+import com.mito.mitomod.common.BAO_main;
 
 import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler;
 import cpw.mods.fml.common.Loader;
@@ -54,7 +54,7 @@ public class RenderBlockPipe implements ISimpleBlockRenderingHandler {
 		}
 
 		Block block = world.getBlock(x, y, z);
-		return block.getRenderType() != mitomain.PipeRenderType ? false : true;
+		return block.getRenderType() != BAO_main.PipeRenderType ? false : true;
 	}
 
 	@Override
@@ -189,7 +189,7 @@ public class RenderBlockPipe implements ISimpleBlockRenderingHandler {
 
 	@Override
 	public int getRenderId() {
-		return mitomain.PipeRenderType;
+		return BAO_main.PipeRenderType;
 	}
 
 }

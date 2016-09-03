@@ -231,13 +231,6 @@ public class EntityFake extends EntityBraceBase {
 	public float getShadowSize() {
 		return 0.0F;
 	}
-
-	public void delete(boolean b) {
-		if (!this.isDead) {
-			this.host.delete(true);
-			//WorldRenderer r = this.worldObj.getChunkFromBlockCoords(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posZ));
-		}
-	}
 	
 	@SideOnly(Side.CLIENT)
 	public int getBrightnessForRender(float p_70070_1_) {

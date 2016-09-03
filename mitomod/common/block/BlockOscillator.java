@@ -1,6 +1,6 @@
 package com.mito.mitomod.common.block;
 
-import com.mito.mitomod.common.mitomain;
+import com.mito.mitomod.common.BAO_main;
 import com.mito.mitomod.common.tile.TileOscillator;
 
 import cpw.mods.fml.relauncher.Side;
@@ -37,7 +37,7 @@ public class BlockOscillator extends BlockContainer {
 		setBlockName("BlockOscillator");
 		setBlockTextureName("mitomod:frame");
 
-		setCreativeTab(mitomain.tab);
+		setCreativeTab(BAO_main.tab);
         setHardness(1.5F);
         setResistance(1.0F);
         setStepSound(Block.soundTypeMetal);
@@ -131,7 +131,7 @@ public class BlockOscillator extends BlockContainer {
 	@SideOnly(Side.CLIENT)
 	public int getRenderType() {
 
-		return mitomain.OscillatorRenderType;
+		return BAO_main.OscillatorRenderType;
 	}
 
 	public void setBlockBoundsForItemRender() {

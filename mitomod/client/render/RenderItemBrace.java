@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.IItemRenderer;
 
 public class RenderItemBrace implements IItemRenderer {
@@ -30,12 +29,11 @@ public class RenderItemBrace implements IItemRenderer {
 
 		ItemBrace item = (ItemBrace) itemstack.getItem();
 		int isize = item.getSize(itemstack);
-		int mode = item.getType(itemstack);
 		int color = item.getColor(itemstack);
 
 		Tessellator tess = Tessellator.instance;
 
-		Minecraft.getMinecraft().renderEngine.bindTexture(new ResourceLocation("mitomod", "textures/blocks/brace_" + color + ".png"));
+		Minecraft.getMinecraft().renderEngine.bindTexture(item.getResourceLocation(itemstack));
 
 		double size = 0.25 * (double) isize + 0.25;
 		size = size >= 5.0 ? 5.0 : size;

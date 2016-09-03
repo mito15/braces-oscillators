@@ -1,18 +1,24 @@
 package com.mito.mitomod.common.item;
 
+import com.mito.mitomod.BraceBase.BB_DataLists;
+import com.mito.mitomod.BraceBase.BraceBase;
+import com.mito.mitomod.BraceBase.Brace.Brace;
 import com.mito.mitomod.client.BB_Key;
-import com.mito.mitomod.common.ItemUsePacketProcessor;
-import com.mito.mitomod.common.PacketHandler;
-import com.mito.mitomod.common.mitomain;
+import com.mito.mitomod.client.RenderHighLight;
+import com.mito.mitomod.common.BAO_main;
+import com.mito.mitomod.common.mitoLogger;
+import com.mito.mitomod.common.entity.EntityWrapperBB;
+import com.mito.mitomod.utilities.MitoMath;
+import com.mito.mitomod.utilities.MitoUtil;
 
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 
-public class ItemBender extends ItemBraceBase {
+public class ItemBender extends ItemSet {
 
 	public byte key = 0;
 
@@ -25,177 +31,82 @@ public class ItemBender extends ItemBraceBase {
 	}
 
 	@Override
-	public int getMaxItemUseDuration(ItemStack itemstack) {
-		return 72000;
-	}
-
-	@Override
-	public EnumAction getItemUseAction(ItemStack itemstack) {
-		return EnumAction.none;
-	}
-
-	@Override
-	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player) {
-
-		player.setItemInUse(itemstack, 71999);
-		return itemstack;
-	}
-
-	@Override
-	public void onPlayerStoppedUsing(ItemStack itemstack, World world, EntityPlayer player, int i) {
-
-		NBTTagCompound nbt = itemstack.getTagCompound();
-
-
-		if (world.isRemote) {
-
-			PacketHandler.INSTANCE.sendToServer(new ItemUsePacketProcessor(mitomain.proxy.getKey(), player.inventory.currentItem));
-
-		}
-
-		player.clearItemInUse();
-
-	}
-
 	public void nbtInit(NBTTagCompound nbt, ItemStack itemstack) {
-
-		nbt.setBoolean("activated", false);
-		nbt.setInteger("entityID", -1);
-		nbt.setInteger("selectNum", 0);
-
+		super.nbtInit(nbt, itemstack);
+		nbt.setInteger("brace", -1);
 	}
 
-	public void RightClick(ItemStack itemstack, World world, EntityPlayer player, BB_Key key, boolean p_77663_5_) {
+	public double getRayDistance(BB_Key key){
+		return key.isAltPressed() ? 3.0 : 5.0;
+	}
 
-		/*NBTTagCompound nbt = itemstack.getTagCompound();
-
-		if (nbt == null) {
-			nbt = new NBTTagCompound();
-			itemstack.setTagCompound(nbt);
-			this.nbtInit(nbt, itemstack);
+	public void snapDegree(MovingObjectPosition mop, ItemStack itemstack, World world, EntityPlayer player, BB_Key key, NBTTagCompound nbt){
+		if (nbt.getBoolean("activated")) {
+			Vec3 set = Vec3.createVectorHelper(nbt.getDouble("setX"), nbt.getDouble("setY"), nbt.getDouble("setZ"));
+			MitoUtil.snapByShiftKey(mop, set);
 		}
-
-		if (!world.isRemote) {
-
-			Vec3 coord;
-			boolean cKey = key.isControlPressed();
-			boolean canAir = false;
-			boolean hitEntity;
-			MovingObjectPosition movingOP;
-
-			if (key.isAltPressed()) {
-
-				movingOP = MitoUtil.rayTraceIncludeBrace(player, 3.0, 1.0f, cKey);
-				coord = movingOP.hitVec;
-				canAir = true;
-
-			} else {
-
-				movingOP = MitoUtil.rayTraceIncludeBrace(player, 5.0, 1.0f, cKey);
-				coord = movingOP.hitVec;
-				canAir = (movingOP.typeOfHit == MovingObjectType.ENTITY);
-			}
-
-			hitEntity = (movingOP.typeOfHit == MovingObjectType.ENTITY);
-
-			if (canAir || !player.worldObj.isAirBlock(movingOP.blockX, movingOP.blockY, movingOP.blockZ)) {
-
-				//ctrlキー
-				if (!cKey && !hitEntity) {
-
-					coord = MitoUtil.conversionByControlKey(player, coord);
-				}
-
-				if (nbt.getBoolean("activated")) {
-
-					mitoLogger.info("active");
-
-					Vec3 end = coord;
-					EntityFake ent = (EntityFake) world.getEntityByID(nbt.getInteger("entityID"));
-					if (ent != null) {
-
-						Vec3 set = Vec3.createVectorHelper(ent.posX, ent.posY, ent.posZ);
-
-						//shiftKey軸平行
-						if (key.isShiftPressed()) {
-
-							end = MitoUtil.conversionByShiftKey(player, end, itemstack);
-
-						}
-
-						if (MitoMath.subAbs(set, end) < 100) {
-
-							if (ent.host.pair[0] == ent) {
-								ent.host.getData().setSetCP(end);
-								PacketHandler.INSTANCE.sendToAll(new BendPacketProcessor(ent, end, true));
-								mitoLogger.info("set set control point");
-							} else {
-								ent.host.getData().setEndCP(end);
-								PacketHandler.INSTANCE.sendToAll(new BendPacketProcessor(ent, end, false));
-								mitoLogger.info("set end control point");
-							}
-							ent.host.isBent = true;
-							nbt.setBoolean("activated", false);
-						}
-
-					}
-
-				} else {
-
-					List list = world.getEntitiesWithinAABBExcludingEntity((Entity) null, MitoUtil.createAabbBySize(coord, 0.1));
-					List<EntityFake> list1 = new ArrayList<EntityFake>();
-
-					for (int n = 0; n < list.size(); n++) {
-						if (list.get(n) instanceof EntityFake) {
-							EntityFake ent = (EntityFake) list.get(n);
-							if (!ent.isRuler) {
-								list1.add(ent);
-							}
-						}
-					}
-					if (list1.size() > 0) {
-						nbt.setInteger("entityID", list1.get(nbt.getInteger("selectNum") % list1.size()).getEntityId());
-						nbt.setBoolean("activated", true);
-					}
-				}
-			}
-		}*/
-
 	}
 
-	public void onUpdate(ItemStack itemstack, World world, Entity entity, int meta, boolean p_77663_5_) {
+	public boolean snapCenter(){
+		return false;
+	}
 
-		//mitoLogger.info("onUpdate"+world.getWorldTime());
+	public void activate(World world, EntityPlayer player, ItemStack itemstack, MovingObjectPosition mop, NBTTagCompound nbt) {
 
-		NBTTagCompound nbt = itemstack.getTagCompound();
 
-		if (nbt != null) {
-			if (nbt.getBoolean("activated")) {
-				if (entity instanceof EntityPlayer) {
-					EntityPlayer player = (EntityPlayer) entity;
-					if (player.getCurrentEquippedItem() != itemstack) {
-						this.nbtInit(nbt, itemstack);
-					}
-				} else {
-					this.nbtInit(nbt, itemstack);
-				}
+		mitoLogger.info("cul! x : " + MitoMath.rot(Vec3.createVectorHelper(0, 1, 0), Math.PI / 6, Vec3.createVectorHelper(0, 0, 1)));
+
+
+		if (mop.entityHit != null && mop.entityHit instanceof EntityWrapperBB && ((EntityWrapperBB)mop.entityHit).base instanceof Brace && ((EntityWrapperBB)mop.entityHit).base.isStatic) {
+			mitoLogger.info("bender register complete");
+			Vec3 set = mop.hitVec;
+			Brace brace = (Brace) ((EntityWrapperBB)mop.entityHit).base;
+			nbt.setBoolean("activated", true);
+			if (set.xCoord == brace.pos.xCoord && set.yCoord == brace.pos.yCoord && set.zCoord == brace.pos.zCoord) {
+				nbt.setBoolean("isPos", true);
+			} else {
+				nbt.setBoolean("isPos", false);
 			}
-		} else {
-			nbt = new NBTTagCompound();
-			itemstack.setTagCompound(nbt);
-			this.nbtInit(nbt, itemstack);
+			nbt.setInteger("brace", brace.BBID);
+		}
+	}
+
+	public void onActiveClick(World world, EntityPlayer player, ItemStack itemstack, MovingObjectPosition movingOP, Vec3 set, Vec3 end, NBTTagCompound nbt) {
+		BraceBase base = BB_DataLists.getWorldData(world).getBraceBaseByID(nbt.getInteger("brace"));
+		if (base != null && base.isStatic && base instanceof Brace) {
+			Brace brace = (Brace) base;
+			/*if (nbt.getBoolean("isPos")) {
+				end = MitoMath.vectorSub(end, brace.pos);
+				brace.offCurvePoints1 = end;
+				PacketHandler.INSTANCE.sendToAll(new BendPacketProcessor(brace, end, true));
+				mitoLogger.info("bend set");
+			} else {
+				end = MitoMath.vectorSub(end, brace.end);
+				brace.offCurvePoints2 = end;
+				PacketHandler.INSTANCE.sendToAll(new BendPacketProcessor(brace, end, false));
+				mitoLogger.info("bender end");
+			}
+			brace.hasCP = true;*/
 		}
 	}
 
 	@Override
-	public boolean onDroppedByPlayer(ItemStack itemstack, EntityPlayer player) {
-		NBTTagCompound nbt = itemstack.getTagCompound();
+	public boolean drawHighLightBox(ItemStack itemstack, EntityPlayer player, double partialTicks, MovingObjectPosition mop) {
+		NBTTagCompound nbt = getTagCompound(itemstack);
+		if (mop == null || !MitoUtil.canClick(player.worldObj, BAO_main.proxy.getKey(), mop))
+			return false;
+		Vec3 set = mop.hitVec;
 
-		if (nbt != null && nbt.getBoolean("activated")) {
-
-			this.nbtInit(nbt, itemstack);
+		RenderHighLight rh = RenderHighLight.INSTANCE;
+		if (nbt.getBoolean("activated")) {
+			//Vec3 end = Vec3.createVectorHelper(nbt.getDouble("setX"), nbt.getDouble("setY"), nbt.getDouble("setZ"));
+			rh.drawFakeBraceBend(player, set, nbt, partialTicks);
+		} else {
+			if (mop.typeOfHit == MovingObjectPosition.MovingObjectType.ENTITY && mop.entityHit != null && mop.entityHit instanceof EntityWrapperBB && ((EntityWrapperBB)mop.entityHit).base instanceof Brace) {
+				rh.drawCenter(player, set, ((Brace) ((EntityWrapperBB)mop.entityHit).base).size / 2 + 0.1, partialTicks);
+				this.drawHighLightBrace(player, partialTicks, mop);
+			}
 		}
-
 		return true;
 	}
 

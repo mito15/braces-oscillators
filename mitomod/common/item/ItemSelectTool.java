@@ -1,20 +1,29 @@
 package com.mito.mitomod.common.item;
 
-import com.mito.mitomod.client.BB_Key;
-import com.mito.mitomod.common.ItemUsePacketProcessor;
-import com.mito.mitomod.common.PacketHandler;
-import com.mito.mitomod.common.mitomain;
+import java.util.List;
 
-import net.minecraft.entity.Entity;
+import com.mito.mitomod.BraceBase.BB_DataLists;
+import com.mito.mitomod.BraceBase.BraceBase;
+import com.mito.mitomod.client.BB_Key;
+import com.mito.mitomod.client.BB_SelectedGroup;
+import com.mito.mitomod.client.RenderHighLight;
+import com.mito.mitomod.common.BAO_main;
+import com.mito.mitomod.common.PacketHandler;
+import com.mito.mitomod.common.entity.EntityWrapperBB;
+import com.mito.mitomod.common.item.GroupPacketProcessor.EnumGroupMode;
+import com.mito.mitomod.utilities.MitoMath;
+import com.mito.mitomod.utilities.MitoUtil;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 
 public class ItemSelectTool extends ItemBraceBase {
-
-	public byte key = 0;
 
 	public ItemSelectTool() {
 		super();
@@ -24,131 +33,131 @@ public class ItemSelectTool extends ItemBraceBase {
 	}
 
 	@Override
-	public int getMaxItemUseDuration(ItemStack itemstack) {
-		return 72000;
-	}
-
-	@Override
-	public EnumAction getItemUseAction(ItemStack itemstack) {
-		return EnumAction.none;
-	}
-
-	@Override
 	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player) {
+		if (world.isRemote) {
+			NBTTagCompound nbt = getTagCompound(itemstack);
+			MovingObjectPosition movingOP = Minecraft.getMinecraft().objectMouseOver;
+			boolean flag = MitoUtil.isBrace(movingOP);
+			BB_SelectedGroup sel = BAO_main.proxy.sg;
+			MovingObjectPosition mop = this.getMovingOPWithKey(itemstack, world, player, BAO_main.proxy.getKey(), Minecraft.getMinecraft().objectMouseOver, 1.0);
 
-		player.setItemInUse(itemstack, 71999);
+			if (sel.ismove) {
+				if (player.isSneaking()) {
+					sel.delete();
+				} else {
+					if (!sel.getList().isEmpty()) {
+						Vec3 pos = sel.getDistance(mop);
+						double yaw = 0;
+						PacketHandler.INSTANCE.sendToServer(new GroupPacketProcessor(EnumGroupMode.COPY, sel.getList(), pos, yaw));
+						sel.breakGroup();
+						sel.delete();
+					}
+				}
+				sel.setmove(false);
+				sel.activated = false;
+			} else if (sel.iscopy()) {
+				if (player.isSneaking()) {
+					sel.delete();
+				} else {
+					if (!sel.getList().isEmpty()) {
+						Vec3 pos = sel.getDistance(mop);
+						double yaw = 0;
+						PacketHandler.INSTANCE.sendToServer(new GroupPacketProcessor(EnumGroupMode.COPY, sel.getList(), pos, yaw));
+					}
+				}
+				sel.setcopy(false);
+				sel.activated = false;
+			} else {
+				if (sel.activated) {
+					Vec3 set = mop.hitVec;
+					if (MitoMath.subAbs(sel.set, set) < 5000) {
+						AxisAlignedBB aabb = MitoUtil.createAABBByVec3(sel.set, set);
+						List<BraceBase> list = BB_DataLists.getWorldData(world).getBraceBaseWithAABB(aabb);
+						if (player.isSneaking()) {
+							sel.addShift(list);
+						} else {
+							sel.replace(list);
+						}
+						sel.activated = false;
+					}
+				} else {
+					if (flag) {
+						BraceBase base = ((EntityWrapperBB) movingOP.entityHit).base;
+						if (player.isSneaking()) {
+							sel.addShift(base);
+						} else {
+							if (sel.getList().contains(base)) {
+								//GUI
+								if (BAO_main.proxy.getKey().isControlPressed()) {
+									sel.set = mop.hitVec;
+									sel.setcopy(true);
+									//PacketHandler.INSTANCE.sendToServer(new GroupPacketProcessor(EnumGroupMode.COPY, sel.getList()));
+								} else {
+									sel.set = mop.hitVec;
+									PacketHandler.INSTANCE.sendToServer(new GroupPacketProcessor(EnumGroupMode.GUI, sel.getList()));
+								}
+							} else {
+								sel.replace(base);
+							}
+						}
+						sel.activated = false;
+					} else {
+						if (player.isSneaking()) {
+							sel.delete();
+						} else {
+							Vec3 set = mop.hitVec;
+							sel.set = set;
+							sel.activated = true;
+						}
+					}
+				}
+			}
+		}
 		return itemstack;
+	}
+
+	public double getRayDistance(BB_Key key) {
+		return key.isAltPressed() ? 3.0 : 5.0;
 	}
 
 	@Override
 	public void onPlayerStoppedUsing(ItemStack itemstack, World world, EntityPlayer player, int i) {
-
-		NBTTagCompound nbt = itemstack.getTagCompound();
-
-		//if (true || !nbt.getBoolean("activated")) {
-		if (world.isRemote) {
-			PacketHandler.INSTANCE.sendToServer(new ItemUsePacketProcessor(mitomain.proxy.getKey(), player.inventory.currentItem));
-
-		}
-
-		player.clearItemInUse();
-
-	}
-
-	public void nbtInit(NBTTagCompound nbt, ItemStack itemstack) {
-
-		nbt.setBoolean("activated", false);
-		nbt.setDouble("setX", 0.0D);
-		nbt.setDouble("setY", 0.0D);
-		nbt.setDouble("setZ", 0.0D);
-		nbt.setInteger("selectNum", 0);
-
-	}
-
-	public void RightClick(ItemStack itemstack, World world, EntityPlayer player, BB_Key key, boolean p_77663_5_) {
-
-		/*NBTTagCompound nbt = itemstack.getTagCompound();
-
-		if (nbt != null) {
-			nbt = new NBTTagCompound();
-			itemstack.setTagCompound(nbt);
-			this.nbtInit(nbt, itemstack);
-		}
-
-		if (!world.isRemote) {
-			Vec3 coord;
-			boolean cKey = key.isControlPressed();
-			boolean canAir = false;
-			boolean hitEntity;
-			MovingObjectPosition movingOP;
-
-			if (key.isAltPressed()) {
-
-				movingOP = MitoUtil.rayTraceIncludeBrace(player, 3.0, 1.0f, cKey);
-				coord = movingOP.hitVec;
-				canAir = true;
-
-			} else {
-
-				movingOP = MitoUtil.rayTraceIncludeBrace(player, 5.0, 1.0f, cKey);
-				coord = movingOP.hitVec;
-				canAir = (movingOP.typeOfHit == MovingObjectType.ENTITY);
-			}
-
-			hitEntity = (movingOP.typeOfHit == MovingObjectType.ENTITY);
-
-			if (canAir || !player.worldObj.isAirBlock(movingOP.blockX, movingOP.blockY, movingOP.blockZ)) {
-
-				if (nbt.getBoolean("activated")) {
-
-					Vec3 end = coord;
-					Vec3 set = Vec3.createVectorHelper(nbt.getDouble("setX"), nbt.getDouble("setY"), nbt.getDouble("setZ"));
-
-				} else {
-
-					nbt.setDouble("setX", coord.xCoord);
-					nbt.setDouble("setY", coord.yCoord);
-					nbt.setDouble("setZ", coord.zCoord);
-					nbt.setBoolean("activated", true);
-				}
-			}
-		}*/
-	}
-
-	public void onUpdate(ItemStack itemstack, World world, Entity entity, int meta, boolean p_77663_5_) {
-
-		//mitoLogger.info("onUpdate"+world.getWorldTime());
-
-		NBTTagCompound nbt = itemstack.getTagCompound();
-
-		if (nbt != null) {
-			if (nbt.getBoolean("activated")) {
-				if (entity instanceof EntityPlayer) {
-					EntityPlayer player = (EntityPlayer) entity;
-					if (player.getCurrentEquippedItem() != itemstack) {
-						this.nbtInit(nbt, itemstack);
-					}
-				} else {
-					this.nbtInit(nbt, itemstack);
-				}
-			}
-		} else {
-			nbt = new NBTTagCompound();
-			itemstack.setTagCompound(nbt);
-			this.nbtInit(nbt, itemstack);
-		}
 	}
 
 	@Override
-	public boolean onDroppedByPlayer(ItemStack itemstack, EntityPlayer player) {
-		NBTTagCompound nbt = itemstack.getTagCompound();
-
-		if (nbt != null && nbt.getBoolean("activated")) {
-
-			this.nbtInit(nbt, itemstack);
+	public boolean drawHighLightBox(ItemStack itemStack, EntityPlayer player, double partialticks, MovingObjectPosition mop) {
+		if (Minecraft.getMinecraft().currentScreen == null) {
+			BB_SelectedGroup sel = BAO_main.proxy.sg;
+			if (mop == null)
+				return false;
+			Vec3 set = mop.hitVec;
+			if (sel.iscopy() || sel.ismove) {
+				sel.drawHighLightCopy(player, partialticks, mop);
+			}
+			sel.drawHighLightGroup(player, partialticks);
+			RenderHighLight rh = RenderHighLight.INSTANCE;
+			if (sel.activated && MitoUtil.canClick(player.worldObj, BAO_main.proxy.getKey(), mop)) {
+				Vec3 end = sel.set;
+				rh.drawBox(player, set, end, partialticks);
+				return true;
+			} else {
+				return this.drawHighLightBrace(player, partialticks, mop);
+			}
 		}
-
-		return true;
+		return false;
 	}
 
+	@Override
+	public boolean wheelEvent(EntityPlayer player, ItemStack stack, BB_Key key, int dwheel) {
+		BB_SelectedGroup sel = BAO_main.proxy.sg;
+		if (sel.iscopy() && key.isShiftPressed()) {
+			int w = dwheel / 120;
+			double div = sel.pasteNum + w;
+			if (sel.pasteNum < 0) {
+				sel.pasteNum = 50000;
+			}
+			return true;
+		}
+		return false;
+	}
 }

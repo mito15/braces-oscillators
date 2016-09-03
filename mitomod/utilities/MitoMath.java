@@ -1,13 +1,11 @@
 package com.mito.mitomod.utilities;
 
+import com.mito.mitomod.client.render.model.Mat4;
+import com.mito.mitomod.client.render.model.Vertex;
+
 import net.minecraft.util.Vec3;
 
 public final class MitoMath {
-
-	public static double[] vectorRatio(double[] set, double[] end, double r) {
-		double[] ret = vectorPul(vectorMul(end, r), vectorMul(set, 1 - r));
-		return ret;
-	}
 
 	public static Vec3 vectorRatio(Vec3 set, Vec3 end, double r) {
 		Vec3 ret = vectorPul(vectorMul(end, r), vectorMul(set, 1 - r));
@@ -39,43 +37,8 @@ public final class MitoMath {
 		return ret;
 	}
 
-	public static double subAbs2(double[] v1, double[] v2) {
-		double ret = MitoMath.abs2(v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]);
-		return ret;
-	}
-
-	public static double dotProduct(double[] d, double[] m) {
-		double ret = d[0] * m[0] + d[1] * m[1] + d[2] * m[2];
-		return ret;
-	}
-
-	public static double[] vectorMul(double[] d, double m) {
-		double[] ret = { d[0] * m, d[1] * m, d[2] * m };
-		return ret;
-	}
-
 	public static Vec3 vectorMul(Vec3 d, double m) {
 		Vec3 ret = Vec3.createVectorHelper(d.xCoord * m, d.yCoord * m, d.zCoord * m);
-		return ret;
-	}
-
-	public static double[] vectorCul(double[] d1, double n1, double[] d2, double n2) {
-		double[] ret = vectorPul(vectorMul(d1, n1), vectorMul(d2, n2));
-		return ret;
-	}
-
-	public static double[] vectorCul(double[] d1, double[] d2, double n2) {
-		double[] ret = vectorPul(d1, vectorMul(d2, n2));
-		return ret;
-	}
-
-	public static double[] vectorDiv(double[] d, double m) {
-
-		if (m == 0) {
-			return d;
-		}
-
-		double[] ret = { d[0] / m, d[1] / m, d[2] / m };
 		return ret;
 	}
 
@@ -89,23 +52,18 @@ public final class MitoMath {
 		return ret;
 	}
 
-	public static double[] vecSetL(double[] d, double l) {
-		double[] ret = vectorMul(unitVector(d), l);
-		return ret;
-	}
+	public static Vec3 vectorPul(Vec3... d){
+		double x = 0;
+		double y = 0;
+		double z = 0;
 
-	public static double[] vectorPul(double[] d1, double[] d2) {
-		double[] ret = { d1[0] + d2[0], d1[1] + d2[1], d1[2] + d2[2] };
-		return ret;
-	}
+		for (int n = 0; n < d.length; n++) {
+			x = x + d[n].xCoord;
+			y = y + d[n].yCoord;
+			z = z + d[n].zCoord;
+		}
 
-	public static double[] vectorPul(double[] d1, Vec3 d2) {
-		double[] ret = { d1[0] + d2.xCoord, d1[1] + d2.yCoord, d1[2] + d2.zCoord };
-		return ret;
-	}
-
-	public static Vec3 vectorPul(Vec3 d1, Vec3 d2) {
-		Vec3 ret = Vec3.createVectorHelper(d1.xCoord + d2.xCoord, d1.yCoord + d2.yCoord, d1.zCoord + d2.zCoord);
+		Vec3 ret = Vec3.createVectorHelper(x, y, z);
 		return ret;
 	}
 
@@ -117,16 +75,19 @@ public final class MitoMath {
 		return ret;
 	}
 
-	public static double[] vectorBezier(double[] d1, double[] d2, double[] d3, double[] d4, double ratio) {
-		double[] ret = vectorRatio(vectorRatio(vectorRatio(d1, d2, ratio), vectorRatio(d2, d3, ratio), ratio),
-				vectorRatio(vectorRatio(d2, d3, ratio), vectorRatio(d3, d4, ratio), ratio), ratio);
+	public static Vec3 vectorBezier(Vec3 d1, Vec3 d2, Vec3 d3, Vec3 d4, double r) {
+		Vec3 ret = vectorPul(vectorMul(d1, Math.pow(r, 3)), vectorMul(d2, 3 * Math.pow(r, 2) * (1 - r)), vectorMul(d3, 3 * Math.pow((1 - r), 2) * r), vectorMul(d4, Math.pow((1 - r), 3)));
 		return ret;
 	}
 
-	public static Vec3 vectorBezier(Vec3 d1, Vec3 d2, Vec3 d3, Vec3 d4, double ratio) {
-		Vec3 ret = vectorRatio(vectorRatio(vectorRatio(d1, d2, ratio), vectorRatio(d2, d3, ratio), ratio),
-				vectorRatio(vectorRatio(d2, d3, ratio), vectorRatio(d3, d4, ratio), ratio), ratio);
-		return ret;
+	public static Vec3 normalBezier(Vec3 d1, Vec3 d2, Vec3 d3, Vec3 d4, double r) {
+		Vec3 ret = vectorPul(vectorMul(d1, 3 * Math.pow(r, 2)), vectorMul(d2, 3 * r * (2 - 3 * r)), vectorMul(d3, 3 * (3 * r - 1) * (r - 1)), vectorMul(d4, -3 * Math.pow((1 - r), 2)));
+		return ret.normalize();
+	}
+
+	public static Vec3 normalBezier(Vec3 d1, Vec3 d2, Vec3 d3, double r) {
+		Vec3 ret = vectorPul(vectorMul(d1, 2 * r), vectorMul(d2, -(4 * r) + 2), vectorMul(d3, 2 * r - 2));
+		return ret.normalize();
 	}
 
 	public static double abs(double x, double y, double z) {
@@ -141,12 +102,6 @@ public final class MitoMath {
 		return ret;
 	}
 
-	public static double abs(double[] v) {
-		double ret = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-
-		return ret;
-	}
-
 	public static Vec3 copyVec3(Vec3 v) {
 		return Vec3.createVectorHelper(v.xCoord, v.yCoord, v.zCoord);
 	}
@@ -157,20 +112,8 @@ public final class MitoMath {
 		return ret;
 	}
 
-	public static double abs2(double[] v) {
-		double ret = Math.pow(v[0], 2) + Math.pow(v[1], 2) + Math.pow(v[2], 2);
-
-		return ret;
-	}
-
 	public static double abs2(Vec3 v) {
 		double ret = Math.pow(v.xCoord, 2) + Math.pow(v.yCoord, 2) + Math.pow(v.zCoord, 2);
-
-		return ret;
-	}
-
-	public static double[] unitVector(double[] v) {
-		double[] ret = vectorDiv(v, abs(v));
 
 		return ret;
 	}
@@ -179,24 +122,6 @@ public final class MitoMath {
 		Vec3 ret = vectorDiv(v, abs(v));
 
 		return ret;
-	}
-
-	public static double[] send(double x, double y, double z) {
-		double[] ret = { x, y, z };
-
-		return ret;
-	}
-
-	public static void assign(double[] v, double x, double y, double z) {
-		v[0] = x;
-		v[1] = y;
-		v[2] = z;
-	}
-
-	public static void assign(double[] v1, double[] v2) {
-		v1[0] = v2[0];
-		v1[1] = v2[1];
-		v1[2] = v2[2];
 	}
 
 	public static double setLimExp(double x, double max) {
@@ -215,24 +140,6 @@ public final class MitoMath {
 		return ret;
 	}
 
-	public static double[][] equalize(double[] s, double[] e, int a) {
-
-		double[][] ret = new double[a + 1][3];
-		double partX = (e[0] - s[0]) / a;
-		double partY = (e[1] - s[1]) / a;
-		double partZ = (e[2] - s[2]) / a;
-
-		for (int i = 0; i < a + 1; i++) {
-
-			ret[i][0] = s[0] + partX * i;
-			ret[i][1] = s[1] + partY * i;
-			ret[i][2] = s[2] + partZ * i;
-
-		}
-
-		return ret;
-	}
-
 	public static Vec3 getNearPoint(Vec3 s, Vec3 e, Vec3 p) {
 		Vec3 ret;
 
@@ -245,6 +152,20 @@ public final class MitoMath {
 		ret = vectorPul(vectorMul(vectorSub(e, s), k), s);
 
 		return ret;
+	}
+
+	public static Line getLineNearPoint(Vec3 s, Vec3 e, Vec3 p) {
+		Vec3 ret;
+
+		double d1 = abs2(vectorSub(s, p));
+		double d2 = abs2(vectorSub(e, p));
+		double l = abs2(vectorSub(s, e));
+
+		double k = (d1 - d2 + l) / (2 * l);
+		k = k >= 1 ? 1 : (k <= 0 ? 0 : k);
+		ret = vectorPul(vectorMul(vectorSub(e, s), k), s);
+
+		return new Line(ret, p);
 	}
 
 	public static Line getDistanceLine(Vec3 s1, Vec3 e1, Vec3 s2, Vec3 e2) {
@@ -302,6 +223,86 @@ public final class MitoMath {
 
 	public static Vec3 crossZ(Vec3 side1) {
 		return Vec3.createVectorHelper(side1.yCoord, -side1.xCoord, 0);
+	}
+
+	public static Vec3 rot(Vec3 v1, double r, double p, double y) {
+		return rotY(rotX(rotZ(v1, r), p), y);
+	}
+
+	public static Vec3 rotX(Vec3 v, double t) {
+		double rot = t * 2 * Math.PI / 360;
+		double d1 = v.yCoord * Math.cos(rot) - v.zCoord * Math.sin(rot);
+		double d2 = v.yCoord * Math.sin(rot) + v.zCoord * Math.cos(rot);
+		return Vec3.createVectorHelper(v.xCoord, d1, d2);
+	}
+
+	public static Vec3 rotY(Vec3 v, double t) {
+		double rot = t * 2 * Math.PI / 360;
+		double d1 = v.xCoord * Math.cos(rot) + v.zCoord * Math.sin(rot);
+		double d2 = -v.xCoord * Math.sin(rot) + v.zCoord * Math.cos(rot);
+		return Vec3.createVectorHelper(d1, v.yCoord, d2);
+	}
+
+	public static Vec3 rotZ(Vec3 v, double t) {
+		double rot = t * 2 * Math.PI / 360;
+		double d1 = v.xCoord * Math.cos(rot) - v.yCoord * Math.sin(rot);
+		double d2 = v.xCoord * Math.sin(rot) + v.yCoord * Math.cos(rot);
+		return Vec3.createVectorHelper(d1, d2, v.zCoord);
+	}
+
+	public static double getYaw(Vec3 v) {
+
+		if(v.xCoord == 0 && v.zCoord == 0){
+			return 0;
+		}
+		double yaw;
+		double zabs = v.zCoord;
+		yaw = Math.atan(v.xCoord / zabs) / Math.PI * 180;
+		if (0 > v.zCoord) {
+			if (0 < v.xCoord) {
+				yaw = yaw + 180;
+			} else {
+				yaw = yaw - 180;
+			}
+		}
+		if(Double.isNaN(yaw)){
+			return 0.0;
+		}
+		return yaw;
+	}
+
+	public static double getYaw(Vec3 v1, Vec3 v2) {
+		return getYaw(vectorSub(v2, v1));
+	}
+
+	public static double getPitch(Vec3 v) {
+		double pitch;
+		double xzabs = Math.sqrt(Math.pow(v.xCoord, 2) + Math.pow(v.zCoord, 2));
+		pitch = -Math.atan(v.yCoord / xzabs) / Math.PI * 180;
+		if(Double.isNaN(pitch)){
+			return 0.0;
+		}
+		return pitch;
+	}
+
+	public static double getPitch(Vec3 v1, Vec3 v2) {
+		return getPitch(vectorSub(v2, v1));
+	}
+
+	public static Vec3 getNormal(Vec3 v1, Vec3 v2, Vec3 v3) {
+		return vectorSub(v2, v1).crossProduct(vectorSub(v3, v1)).normalize();
+	}
+
+	public static Vec3 getNormal(Vertex rv1, Vertex rv2, Vertex rv3) {
+		return getNormal(rv1.pos, rv2.pos, rv3.pos);
+	}
+
+	public static Vec3 rot(Vec3 v, double t, Vec3 n) {
+		double a = Math.sin(t);
+		double b = 1 - Math.cos(t);
+		Mat4 r = Mat4.createMat4(0, -n.zCoord, n.yCoord, n.zCoord, 0, -n.xCoord, -n.yCoord, n.xCoord, 0);
+		Mat4 m = new Mat4().add(r.copy().mul(a)).add(r.copy().matrixProduct(r.copy()).mul(b));
+		return m.transformVec3(v);
 	}
 
 }

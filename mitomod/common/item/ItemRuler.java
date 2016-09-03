@@ -1,25 +1,26 @@
 package com.mito.mitomod.common.item;
 
+import java.util.List;
+
+import com.mito.mitomod.BraceBase.Brace.Scale;
 import com.mito.mitomod.client.BB_Key;
-import com.mito.mitomod.common.ItemUsePacketProcessor;
-import com.mito.mitomod.common.PacketHandler;
-import com.mito.mitomod.common.mitomain;
-import com.mito.mitomod.common.entity.EntityFake;
+import com.mito.mitomod.client.RenderHighLight;
 import com.mito.mitomod.utilities.MitoMath;
+import com.mito.mitomod.utilities.MitoUtil;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.renderer.texture.IIconRegister;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.IIcon;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.StatCollector;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 
-public class ItemRuler extends ItemBraceBase {
+public class ItemRuler extends ItemSet {
 
 	public byte key = 0;
 
@@ -49,8 +50,16 @@ public class ItemRuler extends ItemBraceBase {
 	}
 
 	@Override
-	public String getUnlocalizedName(ItemStack itemstack) {
-		return super.getUnlocalizedName() + this.getDiv(itemstack);
+	public String getItemStackDisplayName(ItemStack itemstack) {
+		int isize = this.getDiv(itemstack);
+		return ("" + StatCollector.translateToLocal(this.getUnlocalizedNameInefficiently(itemstack) + ".name") + " /" + isize).trim();
+	}
+
+	@SideOnly(Side.CLIENT)
+	public void addInformation(ItemStack itemstack, EntityPlayer player, List list, boolean b) {
+		super.addInformation(itemstack, player, list, b);
+		list.add("scale : " + this.getDiv(itemstack));
+
 	}
 
 	@Override
@@ -59,175 +68,72 @@ public class ItemRuler extends ItemBraceBase {
 		this.icon = iiconregister.registerIcon("mitomod:ruler");
 	}
 
-	@Override
-	public boolean getShareTag() {
-		return true;
-	}
-
 	public int getDiv(ItemStack itemstack) {
 		return (itemstack.getItemDamage() & (16 - 1)) + 1;
 	}
 
-	@Override
-	public int getMaxItemUseDuration(ItemStack itemstack) {
-		return 72000;
+	public double getRayDistance(BB_Key key){
+		return key.isAltPressed() ? 3.0 : 5.0;
 	}
 
-	@Override
-	public EnumAction getItemUseAction(ItemStack itemstack) {
-		return EnumAction.none;
-	}
-
-	@Override
-	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player) {
-
-		player.setItemInUse(itemstack, 71999);
-		return itemstack;
-	}
-
-	@Override
-	public void onPlayerStoppedUsing(ItemStack itemstack, World world, EntityPlayer player, int i) {
-
-		NBTTagCompound nbt = itemstack.getTagCompound();
-
-		if (world.isRemote) {
-			PacketHandler.INSTANCE.sendToServer(new ItemUsePacketProcessor(mitomain.proxy.getKey(), player.inventory.currentItem));
+	public void snapDegree(MovingObjectPosition mop, ItemStack itemstack, World world, EntityPlayer player, BB_Key key, NBTTagCompound nbt){
+		if (nbt.getBoolean("activated")) {
+			Vec3 set = Vec3.createVectorHelper(nbt.getDouble("setX"), nbt.getDouble("setY"), nbt.getDouble("setZ"));
+			MitoUtil.snapByShiftKey(mop, set);
 		}
-
-		player.clearItemInUse();
-
 	}
 
-	public void nbtInit(NBTTagCompound nbt, ItemStack itemstack) {
-
-		nbt.setBoolean("activated", false);
-		nbt.setDouble("setX", 0.0D);
-		nbt.setDouble("setY", 0.0D);
-		nbt.setDouble("setZ", 0.0D);
-
-	}
-
-	public void RightClick(ItemStack itemstack, World world, EntityPlayer player, BB_Key key, boolean p_77663_5_) {
-
-		/*NBTTagCompound nbt = itemstack.getTagCompound();
-
-		if (nbt == null) {
-			nbt = new NBTTagCompound();
-			itemstack.setTagCompound(nbt);
-			this.nbtInit(nbt, itemstack);
+	public void onActiveClick(World world, EntityPlayer player, ItemStack itemstack, MovingObjectPosition movingOP, Vec3 set, Vec3 end, NBTTagCompound nbt) {
+		if (MitoMath.subAbs(set, end) < 100) {
+			int divine = this.getDiv(itemstack);
+			if (MitoMath.subAbs(set, end) < 100) {
+				this.spawnEntityRuler(world, set, end, divine);
+			}
 		}
-
-		if (!world.isRemote) {
-
-			Vec3 coord;
-			boolean cKey = key.isControlPressed();
-			boolean canAir = false;
-			boolean hitEntity;
-			MovingObjectPosition movingOP;
-
-			if (key.isAltPressed()) {
-
-				movingOP = MitoUtil.rayTraceIncludeBrace(player, 3.0, 1.0f, cKey);
-				coord = movingOP.hitVec;
-				canAir = true;
-
-			} else {
-
-				movingOP = MitoUtil.rayTraceIncludeBrace(player, 5.0, 1.0f, cKey);
-				coord = movingOP.hitVec;
-				canAir = (movingOP.typeOfHit == MovingObjectType.ENTITY);
-			}
-
-			hitEntity = (movingOP.typeOfHit == MovingObjectType.ENTITY);
-
-			if (canAir || !player.worldObj.isAirBlock(movingOP.blockX, movingOP.blockY, movingOP.blockZ)) {
-
-				//ctrlキー
-				if (!cKey && !hitEntity) {
-
-					coord = MitoUtil.conversionByControlKey(player, coord);
-				}
-
-				if (nbt.getBoolean("activated")) {
-
-					Vec3 end = coord;
-					Vec3 set = Vec3.createVectorHelper(nbt.getDouble("setX"), nbt.getDouble("setY"), nbt.getDouble("setZ"));
-
-					//shiftKey軸平行
-					if (key.isShiftPressed()) {
-
-						end = MitoUtil.conversionByShiftKey(player, end, itemstack);
-
-					}
-					int divine = this.getDiv(itemstack);
-
-					if (MitoMath.subAbs(set, end) < 100) {
-						this.spawnEntityRuler(world, set, end, divine);
-					}
-
-					if (!player.capabilities.isCreativeMode) {
-
-						itemstack.stackSize--;
-						if (itemstack.stackSize == 0) {
-							player.destroyCurrentEquippedItem();
-						}
-					}
-
-					this.nbtInit(nbt, itemstack);
-
-				} else {
-					nbt.setDouble("setX", coord.xCoord);
-					nbt.setDouble("setY", coord.yCoord);
-					nbt.setDouble("setZ", coord.zCoord);
-
-					nbt.setBoolean("activated", true);
-				}
-			}
-		}*/
-
 	}
 
-	public void onUpdate(ItemStack itemstack, World world, Entity entity, int meta, boolean p_77663_5_) {
+	@Override
+	public boolean drawHighLightBox(ItemStack itemstack, EntityPlayer player, double partialTicks, MovingObjectPosition mop) {
+		NBTTagCompound nbt = getTagCompound(itemstack);
+		if (mop == null)
+			return false;
+		Vec3 set = mop.hitVec;
 
-		NBTTagCompound nbt = itemstack.getTagCompound();
-
-		if (nbt != null) {
-			if (nbt.getBoolean("activated")) {
-				if (entity instanceof EntityPlayer) {
-					EntityPlayer player = (EntityPlayer) entity;
-					if (player.getCurrentEquippedItem() != itemstack) {
-						this.nbtInit(nbt, itemstack);
-					}
-				} else {
-					this.nbtInit(nbt, itemstack);
-				}
-			}
+		RenderHighLight rh = RenderHighLight.INSTANCE;
+		if (itemstack.getTagCompound() != null && itemstack.getTagCompound().getBoolean("activated")) {
+			Vec3 end = Vec3.createVectorHelper(nbt.getDouble("setX"), nbt.getDouble("setY"), nbt.getDouble("setZ"));
+			rh.drawRuler(player, set, end, this.getDiv(itemstack), partialTicks);
 		} else {
-			nbt = new NBTTagCompound();
-			itemstack.setTagCompound(nbt);
-			this.nbtInit(nbt, itemstack);
+			rh.drawCenter(player, set, partialTicks);
 		}
+
+		return true;
+
 	}
 
 	public void spawnEntityRuler(World world, Vec3 v1, Vec3 v2, int div) {
 		Vec3 partV12 = MitoMath.vectorDiv(v2.addVector(-v1.xCoord, -v1.yCoord, -v1.zCoord), (double) div);
 		for (int n = 0; n < (div + 1); n++) {
-			EntityFake fake = new EntityFake(world, v1.xCoord + (double) n * partV12.xCoord, v1.yCoord + (double) n * partV12.yCoord, v1.zCoord + (double) n * partV12.zCoord);
-			world.spawnEntityInWorld(fake);
+			Scale scale = new Scale(world, v1.xCoord + (double) n * partV12.xCoord, v1.yCoord + (double) n * partV12.yCoord, v1.zCoord + (double) n * partV12.zCoord);
+			scale.addToWorld();
 		}
 
 	}
 
-	@Override
-	public boolean onDroppedByPlayer(ItemStack itemstack, EntityPlayer player) {
-		NBTTagCompound nbt = itemstack.getTagCompound();
+	public boolean wheelEvent(EntityPlayer player, ItemStack stack, BB_Key key, int dwheel) {
+		if (key.isShiftPressed()) {
+			int w = dwheel / 120;
+			int div = stack.getItemDamage() + w;
+			if (div < 0) {
+				div = 128;
+			} else if (div > 128) {
+				div = 0;
+			}
 
-		if (nbt != null && nbt.getBoolean("activated")) {
-
-			this.nbtInit(nbt, itemstack);
+			stack.setItemDamage(div);
+			return true;
 		}
-
-		return true;
+		return false;
 	}
 
 }

@@ -1,14 +1,22 @@
 package com.mito.mitomod.common.item;
 
+import com.mito.mitomod.BraceBase.BB_PacketProcessor;
+import com.mito.mitomod.BraceBase.BB_PacketProcessor.Mode;
+import com.mito.mitomod.BraceBase.Brace.Brace;
 import com.mito.mitomod.client.BB_Key;
-import com.mito.mitomod.common.ItemUsePacketProcessor;
+import com.mito.mitomod.common.BAO_main;
 import com.mito.mitomod.common.PacketHandler;
-import com.mito.mitomod.common.mitomain;
+import com.mito.mitomod.common.mitoLogger;
+import com.mito.mitomod.common.entity.EntityWrapperBB;
+import com.mito.mitomod.utilities.MitoMath;
+import com.mito.mitomod.utilities.MitoUtil;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 
 public class ItemBar extends ItemBraceBase {
@@ -19,7 +27,7 @@ public class ItemBar extends ItemBraceBase {
 	public ItemBar() {
 		super();
 		this.setTextureName("mitomod:bar");
-		this.setCreativeTab(mitomain.tab);
+		this.setCreativeTab(BAO_main.tab);
 		this.maxStackSize = 1;
 		this.setMaxDamage(3);
 
@@ -38,35 +46,9 @@ public class ItemBar extends ItemBraceBase {
 		return 72000;
 	}
 
-	@Override
-	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player) {
-
-		player.setItemInUse(itemstack, 71999);
-		return itemstack;
-	}
-
-	@Override
-	public void onPlayerStoppedUsing(ItemStack itemstack, World world, EntityPlayer player, int i) {
-
-		NBTTagCompound nbt = itemstack.getTagCompound();
-
-		if (nbt == null) {
-			nbt = new NBTTagCompound();
-			itemstack.setTagCompound(nbt);
-			nbt.setInteger("selectNum", 0);
-		}
-
-		if (world.isRemote) {
-			PacketHandler.INSTANCE.sendToServer(new ItemUsePacketProcessor(mitomain.proxy.getKey(), player.inventory.currentItem));
-
-		}
-		//}
-		player.clearItemInUse();
-
-	}
-
 	public void RightClick(ItemStack itemstack, World world, EntityPlayer player, BB_Key key, boolean p_77663_5_) {
 
+		mitoLogger.info("cul! x : " + MitoMath.rot(Vec3.createVectorHelper(0, 1, 0), 30, Vec3.createVectorHelper(0, 0, 1)));
 		/*NBTTagCompound nbt = itemstack.getTagCompound();
 
 		if (nbt == null) {
@@ -152,24 +134,30 @@ public class ItemBar extends ItemBraceBase {
 	}
 
 	@Override
-	public boolean drawHighLightBox(ItemStack itemstack, EntityPlayer player, double partialTicks) {
-		/*MovingObjectPosition mop = this.getMovingOPWithKey(itemstack, player.worldObj, player, mitomain.proxy.getKey(), true);
-		if (mop == null)
-			return false;
-		Vec3 set = mop.hitVec;
-		double size;
-		if (this.getDamage(itemstack) >= this.sizeArray.length) {
-			size = this.sizeArray[0];
-		} else {
-			size = this.sizeArray[this.getDamage(itemstack)];
+	public boolean drawHighLightBox(ItemStack itemstack, EntityPlayer player, double partialticks, MovingObjectPosition mop) {
+		return this.drawHighLightBrace(player, partialticks, mop);
+	}
+
+	public boolean wheelEvent(EntityPlayer player, ItemStack stack, BB_Key key, int dwheel) {
+		if (key.isShiftPressed()) {
+			MovingObjectPosition m2 = this.getMovingOPWithKey(stack, player.worldObj, player, key, Minecraft.getMinecraft().objectMouseOver, 1.0);
+			if (m2 != null) {
+				if (MitoUtil.isBrace(m2) && ((EntityWrapperBB)m2.entityHit).base instanceof Brace) {
+					Brace brace = (Brace) ((EntityWrapperBB)m2.entityHit).base;
+					int w = dwheel / 120;
+					double div = brace.getRoll() + (double)w * 15;
+					if (div < 0) {
+						div = div + 360;
+					} else if (div > 360) {
+						div = div - 360;
+					}
+					brace.setRoll(div);
+					PacketHandler.INSTANCE.sendToServer(new BB_PacketProcessor(Mode.SYNC, brace));
+					return true;
+				}
+			}
 		}
-		boolean onlyOne = this.getDamage(itemstack) == 3;
-
-		RenderHighLight rh = RenderHighLight.INSTANCE;
-		rh.drawBox(player, set, size, partialTicks);
-		rh.highlightWithBar(player, size, set, (byte) 2, onlyOne);*/
-
-		return true;
+		return false;
 	}
 
 }

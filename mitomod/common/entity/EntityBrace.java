@@ -2,16 +2,17 @@ package com.mito.mitomod.common.entity;
 
 import java.util.Random;
 
+import com.mito.mitomod.BraceBase.BB_DataLists;
+import com.mito.mitomod.BraceBase.BB_EnumTexture;
+import com.mito.mitomod.BraceBase.BraceBase;
+import com.mito.mitomod.BraceBase.Brace.Brace;
+import com.mito.mitomod.BraceBase.Brace.Render.BB_TypeResister;
 import com.mito.mitomod.common.BraceData;
-import com.mito.mitomod.common.PacketHandler;
-import com.mito.mitomod.common.mitomain;
-import com.mito.mitomod.common.item.ItemBrace;
+import com.mito.mitomod.common.mitoLogger;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Vec3;
@@ -24,6 +25,7 @@ public class EntityBrace extends EntityBraceBase {
 	public boolean shouldInit = true;
 	public EntityFake[] pair = new EntityFake[2];
 	private BraceData data;
+	boolean flag = false;
 	//1:透明化フラグ 2:消去色フラグ
 	public byte flags;
 	public boolean isBent = false;
@@ -53,11 +55,10 @@ public class EntityBrace extends EntityBraceBase {
 		this(world, set.xCoord, set.yCoord, set.zCoord, end.xCoord, end.yCoord, end.zCoord, size, tex, type);
 
 	}
-	
-	public void setDead()
-    {
-        this.isDead = true;
-    }
+
+	public void setDead() {
+		this.isDead = true;
+	}
 
 	public BraceData getData() {
 		return this.data;
@@ -74,19 +75,14 @@ public class EntityBrace extends EntityBraceBase {
 	}
 
 	public AxisAlignedBB getBoundingBox() {
-		/*if(this.data == null){
-			return null;
+		/*List list;//複数AABBから成るリスト
+		AxisAlignedBB[] aabbs = new AxisAlignedBB[list.size()];
+		for (int n = 0; n < list.size(); n++) {
+			aabbs[n] = list.get(n);
 		}
-		Vec3 v = MitoMath.vectorSub(this.getEnd(), this.getSet());
-		Vec3 v1, v2;
-		if (Math.abs(v.xCoord) < 0.0005 && Math.abs(v.zCoord) < 0.0005) {
-			v1 = MitoMath.vectorMul(Vec3.createVectorHelper(1, 0, 0), this.getData().getDSize());
-			v2 = MitoMath.vectorMul(Vec3.createVectorHelper(0, 0, 1), this.getData().getDSize());
-		} else {
-			v1 = MitoMath.vectorMul(MitoMath.unitVector(v.crossProduct(Vec3.createVectorHelper(0, 1, 0))), this.getData().getDSize());
-			v2 = MitoMath.vectorMul(MitoMath.unitVector(v.crossProduct(v1)), this.getData().getDSize());
-		}
-		return OrientedBoundingBox.getBoundingBox(Vec3.createVectorHelper(this.posX, this.posY, this.posZ), v, v1, v2);*/
+		if (list.size() > 0) {
+			return new MultiBoundingBox(aabbs);
+		}*/
 		return null;
 	}
 
@@ -98,16 +94,37 @@ public class EntityBrace extends EntityBraceBase {
 		return false;
 	}
 
+	//{ "", "C", "noJ", "noJC ", "H", "thin1", "thin2", "thin3", "thin4" };
+	private int convert(int i) {
+		int[] convert = new int[] { 0, 1, 0, 1, 5, 3, 4, 0, 0, 0, 0, 0, 0 };
+		return convert[i];
+	}
+
 	@Override
 	public void onUpdate() {
 
-		//if(worldObj.getTotalWorldTime()%100 == 1)
+		if (!this.worldObj.isRemote) {
+			if (this.flag) {
+				Brace brace = new Brace(worldObj, this.getSet(), this.getEnd(), BB_TypeResister.getFigure(BB_TypeResister.shapeList.get(convert(this.getType()))), BB_EnumTexture.IRON, this.getTexture(), (double) this.getSize() * 0.05);
+				boolean flag = brace.addToWorld();
+				BraceBase brace1 = BB_DataLists.getWorldData(worldObj).getBraceBaseByID(brace.BBID);
+				if (brace1 != null && brace1.datachunk != null) {
+					this.flag = false;
+					this.setDead();
+				} else {
+					//BB_DataLists.getWorldData(worldObj).removeBrace(brace);
+					mitoLogger.info("fail entity");
+				}
+			}
+		}
+
+		//if(worldObj.getTotalWorldTime() % 100 == 1)
 		//mitoLogger.info(""+this.getEndCP().xCoord+this.getEnd().xCoord+this.getSetCP().xCoord);
 
 		//super.onUpdate();
 		//this.setDead();
 
-		if (!this.worldObj.isRemote) {
+		/*if (!this.worldObj.isRemote) {
 			if (this.shouldInit) {
 
 				this.shouldInit = false;
@@ -135,7 +152,7 @@ public class EntityBrace extends EntityBraceBase {
 					this.pair[1] = (EntityFake) worldObj.getEntityByID(pairID1);
 				}
 			}
-		}
+		}*/
 	}
 
 	public int getSize() {
@@ -176,6 +193,8 @@ public class EntityBrace extends EntityBraceBase {
 
 	@Override
 	protected void readEntityFromNBT(NBTTagCompound nbt) {
+
+		this.flag = true;
 
 		if (this.getData() == null) {
 			this.setData(new BraceData());
@@ -231,7 +250,7 @@ public class EntityBrace extends EntityBraceBase {
 		nbt.setByte("type", (byte) this.getData().getType());
 	}
 
-	public void delete(boolean b) {
+	/*public void delete(boolean b) {
 		if (!this.isDead) {
 			this.pair[0].setDead();
 			this.pair[1].setDead();
@@ -246,10 +265,10 @@ public class EntityBrace extends EntityBraceBase {
 		float f1 = this.random.nextFloat() * 0.2F + 0.1F;
 		float f2 = this.random.nextFloat() * 0.2F + 0.1F;
 
-		ItemBrace brace = (ItemBrace) mitomain.ItemBrace;
-		ItemStack itemstack1 = new ItemStack(mitomain.ItemBrace, 1, this.getData().getTexture());
+		ItemBrace brace = (ItemBrace) BAO_main.ItemBrace;
+		ItemStack itemstack1 = new ItemStack(BAO_main.ItemBrace, 1, this.getData().getTexture());
 		brace.setSize(itemstack1, this.getData().getSize());
-		brace.setType(itemstack1, this.getData().getType());
+		brace.setType(itemstack1, "square");
 
 		NBTTagCompound nbt = itemstack1.getTagCompound();
 		itemstack1.setTagCompound(nbt);
@@ -265,7 +284,7 @@ public class EntityBrace extends EntityBraceBase {
 		entityitem.motionY = (double) ((float) this.random.nextGaussian() * f3 + 0.2F);
 		entityitem.motionZ = (double) ((float) this.random.nextGaussian() * f3);
 		worldObj.spawnEntityInWorld(entityitem);
-	}
+	}*/
 
 	public void setSetCP(Vec3 v) {
 		if (this.data == null) {

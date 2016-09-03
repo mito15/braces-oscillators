@@ -41,7 +41,7 @@ public class MitoShapedRecipe implements IRecipe {
 			}
 		}
 		if(outNum >= 5){outNum = 4;}
-		return new ItemStack(mitomain.ItemBrace);
+		return new ItemStack(BAO_main.ItemBrace);
 	}
 
 	@Override

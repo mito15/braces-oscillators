@@ -5,22 +5,25 @@ import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 
+import com.mito.mitomod.BraceBase.BB_DataLists;
+import com.mito.mitomod.BraceBase.BraceBase;
+import com.mito.mitomod.BraceBase.Brace.Brace;
 import com.mito.mitomod.common.entity.EntityBrace;
 import com.mito.mitomod.common.entity.EntityFake;
 import com.mito.mitomod.common.item.ItemBar;
 import com.mito.mitomod.utilities.MitoMath;
 import com.mito.mitomod.utilities.MitoUtil;
 
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.Vec3;
 
 public class RenderHighLight {
-	
+
 	public static RenderHighLight INSTANCE = new RenderHighLight();
-	
-	public void drawRuler(EntityPlayer player, Vec3 v1, Vec3 v2, double div, double partialTicks) {
+
+	public void drawRuler(EntityPlayer player, Vec3 v1, Vec3 v2, int div, double partialTicks) {
 		Vec3 partV12 = MitoMath.vectorDiv(v2.addVector(-v1.xCoord, -v1.yCoord, -v1.zCoord), (double) div);
 
 		GL11.glPushMatrix();
@@ -41,7 +44,7 @@ public class RenderHighLight {
 		GL11.glPopMatrix();
 
 	}
-	
+
 	public void highlightWithBar(EntityPlayer player, double s, Vec3 c, byte f, boolean b) {
 		List list = player.worldObj.getEntitiesWithinAABBExcludingEntity((Entity) null, MitoUtil.createAabbBySize(c, s));
 		List<EntityBrace> list1 = new ArrayList<EntityBrace>();
@@ -75,18 +78,21 @@ public class RenderHighLight {
 	}
 
 	public void drawCenter(EntityPlayer player, Vec3 set, double partialTicks) {
+		drawCenter(player, set, 0.1, partialTicks);
+	}
 
+	public void drawCenter(EntityPlayer player, Vec3 set, double size, double partialTicks) {
 		GL11.glPushMatrix();
 		GL11.glTranslated(-(player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks),
 				-(player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks),
 				-(player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks));
 		GL11.glTranslated(set.xCoord, set.yCoord, set.zCoord);
-		this.renderLine(0.0, 0.0, 0.1);
-		this.renderLine(0.0, 0.0, -0.1);
-		this.renderLine(0.0, 0.1, 0.0);
-		this.renderLine(0.0, -0.1, 0.0);
-		this.renderLine(0.1, 0.0, 0.0);
-		this.renderLine(-0.1, 0.0, 0.0);
+		this.renderLine(0.0, 0.0, size);
+		this.renderLine(0.0, 0.0, -size);
+		this.renderLine(0.0, size, 0.0);
+		this.renderLine(0.0, -size, 0.0);
+		this.renderLine(size, 0.0, 0.0);
+		this.renderLine(-size, 0.0, 0.0);
 		GL11.glPopMatrix();
 	}
 
@@ -107,6 +113,15 @@ public class RenderHighLight {
 				-(player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks));
 		GL11.glTranslated(set.xCoord, set.yCoord, set.zCoord);
 		this.renderBox(size);
+		GL11.glPopMatrix();
+	}
+
+	public void drawBox(EntityPlayer player, Vec3 set, Vec3 end, double partialTicks) {
+		GL11.glPushMatrix();
+		GL11.glTranslated(-(player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks),
+				-(player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks),
+				-(player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks));
+		this.renderBox(set, end);
 		GL11.glPopMatrix();
 	}
 
@@ -141,19 +156,33 @@ public class RenderHighLight {
 
 	}
 
-	public void renderBox(double s) {
-
+	public void renderBox(double s, boolean b) {
 		double size = s / 2.0;
+		this.renderBox(size, size, size, b);
+	}
 
+	public void renderBox(double s) {
+		double size = s / 2.0;
 		this.renderBox(size, size, size);
+	}
 
+	private void renderBox(Vec3 set, Vec3 end) {
+		GL11.glTranslated((set.xCoord + end.xCoord) / 2, (set.yCoord + end.yCoord) / 2, (set.zCoord + end.zCoord) / 2);
+
+		this.renderBox(Math.abs((set.xCoord - end.xCoord)) / 2 + 0.01, Math.abs((set.yCoord - end.yCoord)) / 2 + 0.01, Math.abs((set.zCoord - end.zCoord)) / 2 + 0.01, false);
 	}
 
 	private void renderBox(double x, double y, double z) {
+		renderBox(x, y, z, true);
+	}
+
+	private void renderBox(double x, double y, double z, boolean b) {
 
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glDisable(GL11.GL_TEXTURE_2D);
-		GL11.glBlendFunc(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ZERO);
+		if (b) {
+			GL11.glBlendFunc(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ZERO);
+		}
 		GL11.glLineWidth(2.0F);
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		GL11.glBegin(1);
@@ -192,13 +221,13 @@ public class RenderHighLight {
 
 	}
 
-	private void renderLine(double x, double y, double z) {
+	public void renderLine(double x, double y, double z) {
 
-		//GL11.glEnable(GL11.GL_BLEND);
-		OpenGlHelper.glBlendFunc(770, 771, 1, 0);
-		//GL11.glDisable(GL11.GL_DEPTH_TEST);
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glDisable(GL11.GL_TEXTURE_2D);
+		GL11.glBlendFunc(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ZERO);
 		GL11.glLineWidth(2.0F);
-		GL11.glColor4f(0.0F, 0.0F, 0.0F, 0.5F);
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		GL11.glBegin(1);
 
 		GL11.glVertex3d(0, 0, 0);
@@ -206,14 +235,33 @@ public class RenderHighLight {
 
 		GL11.glEnd();
 
-		//GL11.glEnable(GL11.GL_DEPTH_TEST);
-		//GL11.glDisable(GL11.GL_BLEND);
+		GL11.glDisable(GL11.GL_BLEND);
+		GL11.glEnable(GL11.GL_TEXTURE_2D);
 
 	}
 
-	private void renderLine(Vec3 c) {
+	public void renderLine(Vec3 c) {
 
 		renderLine(c.xCoord, c.yCoord, c.zCoord);
+
+	}
+
+	public void renderLine(Vec3 c, Vec3 p, double size) {
+
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glDisable(GL11.GL_TEXTURE_2D);
+		GL11.glBlendFunc(GL11.GL_ONE_MINUS_DST_COLOR, GL11.GL_ZERO);
+		GL11.glLineWidth((float) size);
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+		GL11.glBegin(1);
+
+		GL11.glVertex3d(c.xCoord, c.yCoord, c.zCoord);
+		GL11.glVertex3d(p.xCoord, p.yCoord, p.zCoord);
+
+		GL11.glEnd();
+
+		GL11.glDisable(GL11.GL_BLEND);
+		GL11.glEnable(GL11.GL_TEXTURE_2D);
 
 	}
 
@@ -262,6 +310,41 @@ public class RenderHighLight {
 		GL11.glPopMatrix();
 
 		//GL11.glDisable(GL11.GL_BLEND);
+	}
+
+	public void drawFakeBraceBend(EntityPlayer player, Vec3 end, NBTTagCompound nbt, double partialTicks) {
+		BraceBase base = BB_DataLists.getWorldData(player.worldObj).getBraceBaseByID(nbt.getInteger("brace"));
+
+		if (base != null && base instanceof Brace) {
+			boolean flag = nbt.getBoolean("isPos");
+			Brace brace = (Brace) base;
+			/*Vec3 v1 = brace.pos;
+			Vec3 v2 = flag ? end : MitoMath.vectorPul(v1, brace.offCurvePoints1);
+			Vec3 v4 = brace.end;
+			Vec3 v3 = flag ? MitoMath.vectorPul(v4, brace.offCurvePoints2) : end;
+			drawBezier(player, v1, v2, v3, v4, 4, partialTicks);*/
+		}
+	}
+
+	public void drawBezier(EntityPlayer player, Vec3 d1, Vec3 d2, Vec3 d3, Vec3 d4, double size, double partialTicks) {
+
+		GL11.glPushMatrix();
+		GL11.glTranslated(-(player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks),
+				-(player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks),
+				-(player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks));
+		GL11.glPushMatrix();
+		Vec3 v1;
+		Vec3 v2;
+		for (int i = 0; i < 20; i++) {
+			v1 = MitoMath.vectorBezier(d1, d2, d3, d4, (double) i * 0.05);
+			v2 = MitoMath.vectorBezier(d1, d2, d3, d4, (double) (i + 1) * 0.05);
+			renderLine(v1, v2, size);
+		}
+
+		GL11.glPopMatrix();
+
+		GL11.glPopMatrix();
+
 	}
 
 }

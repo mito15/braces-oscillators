@@ -18,7 +18,7 @@ public class mitoLogger {
 	}
 
 	public static void info(String msg) {
-		logger.info(msg);
+		if(BAO_main.debug)logger.info(msg);
 	}
 
 	public static void warn(String msg) {
@@ -32,9 +32,9 @@ public class mitoLogger {
 	public static void info(double... list) {
 		String s = "";
 		for (int n = 0; n < list.length; n++) {
-			s = s + " value" + n + " = " + list[n] + "|";
+			s = s + " value" + n + " = " + list[n] + " |";
 		}
-		logger.info("s");
+		logger.info(s);
 	}
 
 }

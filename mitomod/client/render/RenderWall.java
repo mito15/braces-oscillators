@@ -2,7 +2,6 @@ package com.mito.mitomod.client.render;
 
 import org.lwjgl.opengl.GL11;
 
-import com.mito.mitomod.common.entity.BlockEntity;
 import com.mito.mitomod.common.entity.EntityWall;
 import com.mito.mitomod.utilities.MitoMath;
 import com.mito.mitomod.utilities.MitoUtil;
@@ -315,12 +314,10 @@ public class RenderWall extends Render {
 		GL11.glDepthMask(true);
 	}
 
-	protected ResourceLocation getArrowTextures(BlockEntity par1EntityArrow) {
-		return tex[0];
-	}
-
-	protected ResourceLocation getEntityTexture(Entity par1Entity) {
-		return this.getArrowTextures((BlockEntity) par1Entity);
+	@Override
+	protected ResourceLocation getEntityTexture(Entity p_110775_1_) {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
 	}
 
 }

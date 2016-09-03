@@ -10,7 +10,7 @@ import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 
-public class TileOscillator extends TileEntity {
+public class TileOscillator extends TileEntity implements INeuron {
 
 	double freqRand = Math.random() * 20.0;
 	double j = 0.1;
@@ -38,6 +38,18 @@ public class TileOscillator extends TileEntity {
 			this.tileOs[n] = (tile instanceof TileOscillator) ? (TileOscillator) tile : null;
 		}
 
+	}
+	
+	public double getVoltage(int time, int direction) {
+		if (time == this.time) {
+			return volt(this.ang);
+		} else {
+			return volt(this.angPre);
+		}
+	}
+	
+	double volt(double d){
+		return (d >= 18) ? 1.0 : 0;
 	}
 
 	@Override

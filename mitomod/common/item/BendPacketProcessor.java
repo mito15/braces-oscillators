@@ -1,18 +1,20 @@
 package com.mito.mitomod.common.item;
 
-import com.mito.mitomod.common.entity.EntityFake;
+import com.mito.mitomod.BraceBase.BB_DataLists;
+import com.mito.mitomod.BraceBase.BraceBase;
+import com.mito.mitomod.BraceBase.Brace.Brace;
+import com.mito.mitomod.common.BAO_main;
+import com.mito.mitomod.common.mitoLogger;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
 import net.minecraft.util.Vec3;
 
 public class BendPacketProcessor implements IMessage, IMessageHandler<BendPacketProcessor, IMessage> {
 
-	public int entityID;
+	public int id;
 	public double x;
 	public double y;
 	public double z;
@@ -21,9 +23,9 @@ public class BendPacketProcessor implements IMessage, IMessageHandler<BendPacket
 	public BendPacketProcessor() {
 	}
 
-	public BendPacketProcessor(Entity entity, Vec3 v, boolean isSet) {
+	public BendPacketProcessor(Brace brace, Vec3 v, boolean isSet) {
 
-		this.entityID = entity.getEntityId();
+		this.id = brace.BBID;
 		this.x = v.xCoord;
 		this.y = v.yCoord;
 		this.z = v.zCoord;
@@ -32,25 +34,26 @@ public class BendPacketProcessor implements IMessage, IMessageHandler<BendPacket
 
 	@Override
 	public IMessage onMessage(BendPacketProcessor message, MessageContext ctx) {
-		EntityFake ent;
-		Entity entity = Minecraft.getMinecraft().theWorld.getEntityByID(message.entityID);
-
-		if (entity != null && entity instanceof EntityFake) {
-			ent = (EntityFake) entity;
+		Vec3 end = Vec3.createVectorHelper(message.x, message.y, message.z);
+		BraceBase base = BB_DataLists.getWorldData(BAO_main.proxy.getClientWorld()).getBraceBaseByID(message.id);
+		if (base != null && base.isStatic && base instanceof Brace) {
+			Brace brace = (Brace) base;
 			if (message.isSetCP) {
-				ent.host.setSetCP(Vec3.createVectorHelper(message.x, message.y, message.z));
+				//brace.offCurvePoints1 = end;
+				mitoLogger.info("bend set");
 			} else {
-				ent.host.setEndCP(Vec3.createVectorHelper(message.x, message.y, message.z));
+				//brace.offCurvePoints2 = end;
+				mitoLogger.info("bender end");
 			}
-			ent.host.isBent = true;
+			//brace.hasCP = true;
+			brace.shouldUpdateRender = true;
 		}
-
 		return null;
 	}
 
 	@Override
 	public void fromBytes(ByteBuf buf) {
-		this.entityID = buf.readInt();
+		this.id = buf.readInt();
 		this.x = buf.readDouble();
 		this.y = buf.readDouble();
 		this.z = buf.readDouble();
@@ -59,7 +62,7 @@ public class BendPacketProcessor implements IMessage, IMessageHandler<BendPacket
 
 	@Override
 	public void toBytes(ByteBuf buf) {
-		buf.writeInt(entityID);
+		buf.writeInt(id);
 		buf.writeDouble(x);
 		buf.writeDouble(y);
 		buf.writeDouble(z);

@@ -3,12 +3,10 @@ package com.mito.mitomod.client.render;
 import org.lwjgl.opengl.GL11;
 
 import com.mito.mitomod.common.BraceData;
-import com.mito.mitomod.common.entity.BlockEntity;
 import com.mito.mitomod.utilities.MitoMath;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
 
@@ -47,7 +45,8 @@ public class RenderBrace {
 
 		Tessellator.instance.setColorOpaque_F(1.0F, 1.0F, 1.0F);
 		this.bindTexture(this.tex[data.getTexture()]);
-		renderBrace(data, data.getSet(), data.getEnd(), data.getDSize(), data.getPos().xCoord, data.getPos().yCoord, data.getPos().zCoord);
+		this.renderBox(data.getPos().xCoord, data.getPos().yCoord, data.getPos().zCoord, 1.0F);
+		//renderBrace(data, data.getSet(), data.getEnd(), data.getDSize(), data.getPos().xCoord, data.getPos().yCoord, data.getPos().zCoord);
 
 	}
 
@@ -273,14 +272,6 @@ public class RenderBrace {
 		GL11.glDepthMask(true);
 		//GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
-	}
-
-	protected ResourceLocation getArrowTextures(BlockEntity par1EntityArrow) {
-		return tex[0];
-	}
-
-	protected ResourceLocation getEntityTexture(Entity par1Entity) {
-		return this.getArrowTextures((BlockEntity) par1Entity);
 	}
 
 }

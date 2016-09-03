@@ -2,7 +2,6 @@ package com.mito.mitomod.client.render;
 
 import org.lwjgl.opengl.GL11;
 
-import com.mito.mitomod.common.entity.BlockEntity;
 import com.mito.mitomod.common.entity.EntityBrace;
 import com.mito.mitomod.common.entity.EntityFake;
 import com.mito.mitomod.utilities.MitoMath;
@@ -71,7 +70,7 @@ public class RenderEntityBrace extends Render {
 			}
 		}
 	}
-	
+
 	private void renderLine(double x, double y, double z) {
 
 		//GL11.glEnable(GL11.GL_BLEND);
@@ -321,12 +320,10 @@ public class RenderEntityBrace extends Render {
 
 	}
 
-	protected ResourceLocation getArrowTextures(BlockEntity par1EntityArrow) {
-		return tex[0];
-	}
-
-	protected ResourceLocation getEntityTexture(Entity par1Entity) {
-		return this.getArrowTextures((BlockEntity) par1Entity);
+	@Override
+	protected ResourceLocation getEntityTexture(Entity p_110775_1_) {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
 	}
 
 }

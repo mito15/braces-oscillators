@@ -13,14 +13,14 @@ public class CreativeTabMito extends CreativeTabs {
 
 	@Override
 	public Item getTabIconItem() {
-		return mitomain.ItemBar;
+		return BAO_main.ItemBar;
 	}
-	
+
 	@Override
 	@SideOnly(Side.CLIENT)
 	public String getTranslatedTabLabel()
 	{
-		return "TabBraceMod";
+		return "Braces&Oscillators";
 	}
 
 

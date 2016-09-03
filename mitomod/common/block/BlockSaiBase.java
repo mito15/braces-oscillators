@@ -2,7 +2,7 @@ package com.mito.mitomod.common.block;
 
 import java.util.Random;
 
-import com.mito.mitomod.common.mitomain;
+import com.mito.mitomod.common.BAO_main;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
@@ -20,7 +20,7 @@ public class BlockSaiBase extends BlockContainer {
 
 	protected BlockSaiBase() {
 		super(Material.rock);
-		setCreativeTab(mitomain.tab);
+		setCreativeTab(BAO_main.tab);
         setHardness(1.5F);/*硬さ*/
         setResistance(1.0F);/*爆破耐性*/
         setStepSound(Block.soundTypeMetal);

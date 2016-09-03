@@ -1,7 +1,7 @@
 package com.mito.mitomod.client.render.BlockRenderer;
 
 import com.mito.mitomod.client.render.RenderCore;
-import com.mito.mitomod.common.mitomain;
+import com.mito.mitomod.common.BAO_main;
 
 import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler;
 import net.minecraft.block.Block;
@@ -61,7 +61,7 @@ public class RenderBlockOscillator implements ISimpleBlockRenderingHandler {
 
 	@Override
 	public int getRenderId() {
-		return mitomain.OscillatorRenderType;
+		return BAO_main.OscillatorRenderType;
 	}
 
 }

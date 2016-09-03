@@ -3,7 +3,7 @@ package com.mito.mitomod.common.block;
 import java.util.Random;
 
 import com.mito.mitomod.common.mitoLogger;
-import com.mito.mitomod.common.mitomain;
+import com.mito.mitomod.common.BAO_main;
 import com.mito.mitomod.common.tile.TileOscillator;
 import com.mito.mitomod.common.tile.TileOscillatorPipe;
 
@@ -164,7 +164,7 @@ public class BlockOscillatorPipe extends BlockOscillator {
 	@SideOnly(Side.CLIENT)
 	public int getRenderType()
 	{
-		return mitomain.PipeRenderType;
+		return BAO_main.PipeRenderType;
 	}
 
 	public void setBlockBoundsForItemRender()

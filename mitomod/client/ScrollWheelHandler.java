@@ -1,17 +1,12 @@
 package com.mito.mitomod.client;
 
 import com.mito.mitomod.common.PacketHandler;
-import com.mito.mitomod.common.mitomain;
-import com.mito.mitomod.common.item.ItemBar;
 import com.mito.mitomod.common.item.ItemBarPacketProcessor;
-import com.mito.mitomod.common.item.ItemBender;
-import com.mito.mitomod.common.item.ItemBrace;
-import com.mito.mitomod.common.item.ItemRuler;
+import com.mito.mitomod.common.item.ItemBraceBase;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityClientPlayerMP;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.event.MouseEvent;
@@ -30,65 +25,21 @@ public class ScrollWheelHandler {
 	@SubscribeEvent
 	public void mouseEvent(MouseEvent event) {
 		EntityClientPlayerMP player = Minecraft.getMinecraft().thePlayer;
-		if (event.dwheel != 0 && player != null && player.isSneaking()) {
+		if (event.dwheel != 0 && player != null) {
 			ItemStack stack = player.getCurrentEquippedItem();
 			if (stack != null) {
 				Item item = stack.getItem();
-				if (item instanceof ItemBar) {
-					changeSizeBar(stack, player, event.dwheel);
-					event.setCanceled(true);
-				} else if (item instanceof ItemBrace) {
-					changeSizeBrace(stack, player, event.dwheel);
-					event.setCanceled(true);
-				} else if (item instanceof ItemRuler) {
-					changeDivRuler(stack, player, event.dwheel);
-					event.setCanceled(true);
-				}
-			}
-		}
-		if (event.dwheel != 0 && player != null && proxy.isAltKeyDown()) {
-			ItemStack stack = player.getCurrentEquippedItem();
-			if (stack != null) {
-				Item item = stack.getItem();
-				if (item instanceof ItemBar || item instanceof ItemBender) {
-					changeSelect(stack, player, event.dwheel);
-					event.setCanceled(true);
+				if (item instanceof ItemBraceBase) {
+					boolean flag = ((ItemBraceBase) item).wheelEvent(player, stack, proxy.getKey(), event.dwheel);
+					event.setCanceled(flag);
+					if(flag)PacketHandler.INSTANCE.sendToServer(new ItemBarPacketProcessor(player.inventory.currentItem, proxy.getKey(), event.dwheel));
 				}
 			}
 		}
 
 	}
 
-	private void changeDivRuler(ItemStack stack, EntityPlayer player, int dWheel) {
-		int w = dWheel / 120;
-		int div = stack.getItemDamage() + w;
-		if (div < 0) {
-			div = 128;
-		} else if (div > 128) {
-			div = 0;
-		}
-
-		stack.setItemDamage(div);
-
-		PacketHandler.INSTANCE.sendToServer(new ItemBarPacketProcessor(player.inventory.currentItem, div, (byte)2));
-	}
-
-	private void changeSizeBrace(ItemStack stack, EntityPlayer player, int dWheel) {
-
-		ItemBrace brace = (ItemBrace)mitomain.ItemBrace;
-		int w = dWheel / 120;
-		int size = brace.getSize(stack) + w;
-		if (size > brace.sizeMax) {
-			size = brace.sizeMax;
-		} else if (size < 1) {
-			size = 1;
-		}
-
-		brace.setSize(stack, size);
-		PacketHandler.INSTANCE.sendToServer(new ItemBarPacketProcessor(player.inventory.currentItem, size, (byte)2));
-	}
-
-	private void changeSizeBar(ItemStack stack, EntityPlayer player, int dWheel) {
+	/*private void changeSizeBar(ItemStack stack, EntityPlayer player, int dWheel) {
 
 		int w = dWheel / 120;
 		int size = stack.getItemDamage() + w;
@@ -99,7 +50,7 @@ public class ScrollWheelHandler {
 		}
 
 		stack.setItemDamage(size);
-		PacketHandler.INSTANCE.sendToServer(new ItemBarPacketProcessor(player.inventory.currentItem, size, (byte)2));
+		//PacketHandler.INSTANCE.sendToServer(new ItemBarPacketProcessor(player.inventory.currentItem, size, (byte) 2));
 	}
 
 	private void changeSelect(ItemStack stack, EntityPlayer player, int dWheel) {
@@ -114,7 +65,7 @@ public class ScrollWheelHandler {
 
 		stack.getTagCompound().setInteger("selectNum", size);
 
-		PacketHandler.INSTANCE.sendToServer(new ItemBarPacketProcessor(player.inventory.currentItem, size, (byte)4));
-	}
+		//PacketHandler.INSTANCE.sendToServer(new ItemBarPacketProcessor(player.inventory.currentItem, size, (byte) 4));
+	}*/
 
 }
